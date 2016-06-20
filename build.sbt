@@ -34,8 +34,12 @@ val akkaVersion = "2.4.0"
   }
 }*/
 
+val sparkVersion = "1.5.2"
 
 libraryDependencies ++= Seq(
+  "org.apache.spark" %% "spark-core" % sparkVersion,
+  "org.apache.spark" %% "spark-sql" % sparkVersion,
+  "org.apache.spark" %% "spark-hive" % sparkVersion,
     "com.typesafe.akka" %% "akka-actor" % akkaVersion,
     "com.typesafe.akka" %% "akka-cluster" % akkaVersion,
     "com.typesafe.akka" %% "akka-cluster-tools" % akkaVersion

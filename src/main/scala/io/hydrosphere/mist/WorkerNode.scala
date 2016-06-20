@@ -4,11 +4,20 @@ import akka.actor._
 import akka.cluster.ClusterEvent._
 import akka.cluster._
 import akka.event._
+import org.apache.spark.{SparkConf, SparkContext}
 
 
 case class Message(sender: String, message: String)
 
 class ClusterListener extends Actor with ActorLogging {
+
+
+  val sparkConf = new SparkConf()
+    .setMaster("local[*]")
+    .setAppName("foo")
+    .set("spark.driver.allowMultipleContexts", "true")
+
+  lazy val sc = new SparkContext(sparkConf)
 
   val cluster = Cluster(context.system)
 
@@ -43,6 +52,7 @@ class ClusterListener extends Actor with ActorLogging {
             println(s"Now my node number will be ${msg.split('#').last}")
             nodeNumber = msg.split('#').last.toInt
             serverActor ! new Message(nodeAddress.toString, s"Ok. Now my node number #$nodeNumber")
+            //println(sc.startTime.toString)
           }
         }
         case _ => println(msg)
@@ -58,8 +68,12 @@ class ClusterListener extends Actor with ActorLogging {
     case UnreachableMember(member) =>
       log.info(s"[Listener] node is unreachable: $member")
 
-    case MemberRemoved(member, prevStatus) =>
+    case MemberRemoved(member, prevStatus) => {
       log.info(s"[Listener] node is removed: $member after $prevStatus")
+      if(member.address == serverAddress){
+        System.exit(0)
+      }
+    }
 
     case ev: MemberEvent =>
       log.info(s"[Listener] event: $ev")
