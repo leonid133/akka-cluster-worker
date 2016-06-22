@@ -42,7 +42,8 @@ libraryDependencies ++= Seq(
   "org.apache.spark" %% "spark-hive" % sparkVersion,
     "com.typesafe.akka" %% "akka-actor" % akkaVersion,
     "com.typesafe.akka" %% "akka-cluster" % akkaVersion,
-    "com.typesafe.akka" %% "akka-cluster-tools" % akkaVersion
+    "com.typesafe.akka" %% "akka-cluster-tools" % akkaVersion,
+  "org.mapdb" % "mapdb" % "3.0.0-M6"
   )
 
 resolvers += "Akka Snapshots" at "http://repo.akka.io/snapshots/"

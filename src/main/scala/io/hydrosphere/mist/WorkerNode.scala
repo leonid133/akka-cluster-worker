@@ -11,13 +11,13 @@ case class Message(sender: String, message: String)
 
 class ClusterListener extends Actor with ActorLogging {
 
-
+/*
   val sparkConf = new SparkConf()
     .setMaster("local[*]")
     .setAppName("foo")
     .set("spark.driver.allowMultipleContexts", "true")
 
-  lazy val sc = new SparkContext(sparkConf)
+  lazy val sc = new SparkContext(sparkConf)*/
 
   val cluster = Cluster(context.system)
 

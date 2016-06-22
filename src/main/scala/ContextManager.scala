@@ -1,23 +1,45 @@
 package io.hydrosphere.mist
 
 import akka.actor.Actor
+import io.hydrosphere.mist.Messages.{CreateContext, RemoveContext, StopAllContexts}
+//import io.hydrosphere.mist.actors.tools.Messages.{CreateContext, RemoveContext, StopAllContexts}
+import io.hydrosphere.mist.ContextWrapper
 import org.apache.spark.{SparkConf, SparkContext}
 
-/** Manages context repository */
-class ContextManager extends Actor {
-  override def receive: Receive = {
-    //case Message(addr, msg) => println(addr, msg)
-    case Message(addr, msg) => {
-      println(addr, msg)
-      val sparkConf = new SparkConf()
-        .setMaster("local[*]")
-        .setAppName("foo")
-        .set("spark.driver.allowMultipleContexts", "true")
+//import io.hydrosphere.mist.contexts._
 
-      lazy val sc = new SparkContext(sparkConf)
-      println(sc.startTime.toString)
-      sender ! sc.startTime.toString
+
+
+private[mist] class ContextManager extends Actor {
+  override def receive: Receive = {
+    // Returns context if it exists in requested namespace or created a new one if not
+    case message: CreateContext =>
+      val existedContext: ContextWrapper = InMemoryContextRepository.get(new NamedContextSpecification(message.name)) match {
+        // return existed context
+        case Some(contextWrapper) => contextWrapper
+        // create new context
+        case None =>
+          println(s"creating context ${message.name}")
+          val contextWrapper = ContextBuilder.namedSparkContext(message.name)
+
+          InMemoryContextRepository.add(contextWrapper)
+          contextWrapper
+      }
+
+      // if sender is asking, send it result
+      if (sender.path.toString != "akka://mist/deadLetters") {
+        sender ! existedContext
+      }
+
+    // surprise: stops all contexts
+    case StopAllContexts => {
+      InMemoryContextRepository.filter(new DummyContextSpecification()).foreach(_.stop())
+      InMemoryContextRepository.filter(new DummyContextSpecification()).foreach(InMemoryContextRepository.remove(_))
     }
-    case _ => println("************************")
+
+    // removes context
+    case message: RemoveContext =>
+      message.context.context.stop()
+      InMemoryContextRepository.remove(message.context)
   }
 }
